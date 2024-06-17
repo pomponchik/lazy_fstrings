@@ -4,7 +4,7 @@ import ast
 import inspect
 from string import Formatter
 from types import CodeType, FrameType
-from typing import Iterable, Optional, Union, Sized, Dict, Callable, Type, Any
+from typing import Set, Iterable, Optional, Union, Sized, Dict, Callable, Type, Any
 try:
     from typing import Protocol
 except ImportError:
@@ -42,6 +42,12 @@ class ProxyModule(sys.modules[__name__].__class__):  # type: ignore[misc]
         if lazy:
             return result
         return result.data
+
+    def __str__(self) -> str:
+        return 'f'
+
+    def __repr__(self) -> str:
+        return 'f'
 
     def sum_of_nonlocals(self, first_frame: Optional[FrameType], base_qualname: Optional[str], closures: bool, safe: bool) -> Dict[str, Any]:
         if not closures or first_frame is None or base_qualname is None:
@@ -152,8 +158,13 @@ class ProxyModule(sys.modules[__name__].__class__):  # type: ignore[misc]
 
         return True
 
-    def __str__(self) -> str:
-        return 'f'
+    def get_all_mentioned_names(self, string: str) -> Set[str]:
+        result = set()
 
-    def __repr__(self) -> str:
-        return 'f'
+        class Visiter(ast.NodeVisitor):
+            def visit_Name(_self, node: ast.AST) -> Optional[ast.AST]:
+                result.add(node.id)
+
+        Visiter().visit(ast.parse(string))
+
+        return result
